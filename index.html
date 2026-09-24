@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sydney Stein</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES — THEMES
+    ============================================================ */
+    :root {
+      --bg: #08090f;
+      --bg2: #0e1020;
+      --bg3: #131628;
+      --accent: #c4a86c;
+      --accent2: #e8c98a;
+      --accent-rgb: 196,168,108;
+      --text: #f0ede6;
+      --text2: #a8a5b8;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 30px 80px rgba(0,0,0,0.6);
+      --r-sm: 10px;
+      --r-md: 18px;
+      --r-lg: 28px;
+      --r-xl: 48px;
+      --ease: cubic-bezier(0.4,0,0.2,1);
+      --font-d: 'Playfair Display', Georgia, serif;
+      --font-b: 'Space Grotesk', system-ui, sans-serif;
+    }
+    [data-theme="light"] {
+      --bg: #f7f3ee; --bg2: #ede8e0; --bg3: #e3ddd3;
+      --accent: #8b6914; --accent2: #a07820;
+      --accent-rgb: 139,105,20;
+      --text: #1a1814; --text2: #5a5648;
+      --surface: rgba(0,0,0,0.04); --surface2: rgba(0,0,0,0.07);
+      --border: rgba(0,0,0,0.1); --shadow: 0 30px 80px rgba(0,0,0,0.15);
+    }
+    [data-theme="bills"] {
+      --bg: #00184d; --bg2: #00226b; --bg3: #002d8a;
+      --accent: #c60c30; --accent2: #e8143a;
+      --accent-rgb: 198,12,48;
+      --text: #ffffff; --text2: #b8c8f0;
+      --surface: rgba(255,255,255,0.06); --surface2: rgba(255,255,255,0.1);
+      --border: rgba(255,255,255,0.12);
+    }
+    [data-theme="rose"] {
+      --bg: #110818; --bg2: #1a0d24; --bg3: #220f30;
+      --accent: #e040a0; --accent2: #f060c0;
+      --accent-rgb: 224,64,160;
+      --text: #fce8f5; --text2: #c898d8;
+      --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+    }
+    [data-theme="sage"] {
+      --bg: #090f0e; --bg2: #0e1a18; --bg3: #122420;
+      --accent: #4caf86; --accent2: #5ed4a4;
+      --accent-rgb: 76,175,134;
+      --text: #e8f5f0; --text2: #88b8a8;
+      --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      overflow-x: hidden;
+      transition: background 0.5s var(--ease), color 0.5s var(--ease);
+      cursor: none;
+    }
+    body.editor-active { --editor-active: 1; }
+    ::selection { background: rgba(var(--accent-rgb),0.3); color: var(--text); }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cur-dot {
+      position: fixed; width: 8px; height: 8px;
+      background: var(--accent); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s, width 0.2s, height 0.2s, opacity 0.2s;
+    }
+    #cur-ring {
+      position: fixed; width: 36px; height: 36px;
+      border: 1.5px solid rgba(var(--accent-rgb),0.5);
+      border-radius: 50%; pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: width 0.3s, height 0.3s, border-color 0.3s, opacity 0.3s;
+    }
+    body:hover #cur-dot, body:hover #cur-ring { opacity: 1; }
+    .hover-target:hover ~ #cur-ring,
+    a:hover ~ #cur-ring { width: 60px; height: 60px; }
+
+    /* ============================================================
+       LOADING SCREEN
+    ============================================================ */
+    #loader {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; flex-direction: column; gap: 2rem;
+      transition: opacity 0.8s var(--ease);
+    }
+    #loader.done { opacity: 0; pointer-events: none; }
+    .loader-name {
+      font-family: var(--font-d); font-size: clamp(2rem,6vw,4rem);
+      font-weight: 700; color: var(--text); letter-spacing: 0.1em;
+      overflow: hidden;
+    }
+    .loader-name span {
+      display: inline-block;
+      animation: loaderChar 1.2s var(--ease) forwards;
+      opacity: 0; transform: translateY(100%);
+    }
+    @keyframes loaderChar {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .loader-bar-wrap {
+      width: 200px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden;
+    }
+    .loader-bar {
+      height: 100%; background: var(--accent); border-radius: 2px;
+      animation: loaderFill 1.5s var(--ease) forwards;
+    }
+    @keyframes loaderFill { from { width: 0; } to { width: 100%; } }
+
+    /* ============================================================
+       NAVIGATION
+    ============================================================ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.4rem 3rem;
+      transition: background 0.3s var(--ease), backdrop-filter 0.3s;
+    }
+    nav.scrolled {
+      background: rgba(8,9,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    [data-theme="light"] nav.scrolled { background: rgba(247,243,238,0.9); }
+    .nav-logo {
+      font-family: var(--font-d); font-size: 1.3rem; font-weight: 700;
+      color: var(--text); text-decoration: none; letter-spacing: 0.05em;
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--text2); text-decoration: none; font-size: 0.875rem;
+      font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+      position: relative; transition: color 0.3s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--accent); transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* ============================================================
+       HERO SECTION
+    ============================================================ */
+    #hero {
+      position: relative; height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      overflow: hidden; text-align: center;
+    }
+    #hero-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+    }
+    .hero-bg-gradient {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(var(--accent-rgb),0.12) 0%, transparent 70%);
+      animation: gradientPulse 6s ease-in-out infinite alternate;
+    }
+    @keyframes gradientPulse {
+      from { opacity: 0.6; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
+    .hero-content {
+      position: relative; z-index: 2; max-width: 1000px; padding: 0 2rem;
+    }
+    .hero-eyebrow {
+      font-size: 0.875rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--accent); font-weight: 500; margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(20px);
+    }
+    .hero-title {
+      font-family: var(--font-d); font-size: clamp(4rem,12vw,10rem);
+      font-weight: 900; line-height: 0.9; letter-spacing: -0.02em;
+      color: var(--text); margin-bottom: 2.5rem; overflow: hidden;
+    }
+    .hero-title .line { overflow: hidden; display: block; }
+    .hero-title .word {
+      display: inline-block; opacity: 0; transform: translateY(110%);
+    }
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--text) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; background-size: 200% 200%;
+      animation: shimmer 4s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .hero-tags {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center;
+      margin-bottom: 3rem;
+    }
+    .tag {
+      padding: 0.5rem 1.25rem; border: 1px solid var(--border);
+      border-radius: var(--r-xl); font-size: 0.8rem; font-weight: 500;
+      color: var(--text2); background: var(--surface);
+      backdrop-filter: blur(10px); transition: all 0.3s var(--ease);
+      cursor: default; opacity: 0; transform: translateY(20px);
+    }
+    .tag:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(var(--accent-rgb),0.1);
+      transform: translateY(-3px);
+    }
+    .scroll-indicator {
+      position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+      color: var(--text2); font-size: 0.75rem; letter-spacing: 0.15em;
+      text-transform: uppercase; z-index: 2; animation: bobDown 2s ease-in-out infinite;
+    }
+    .scroll-line {
+      width: 1px; height: 60px; background: linear-gradient(to bottom, var(--accent), transparent);
+    }
+    @keyframes bobDown {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ============================================================
+       FLOATING ICONS (hero decoratives)
+    ============================================================ */
+    .float-icon {
+      position: absolute; font-size: 2rem; opacity: 0.15; pointer-events: none;
+      animation: floatAround linear infinite;
+    }
+    @keyframes floatAround {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.15; }
+      50% { opacity: 0.25; }
+      100% { transform: translateY(-30px) rotate(10deg); opacity: 0.15; }
+    }
+
+    /* ============================================================
+       SECTION SHARED STYLES
+    ============================================================ */
+    section {
+      padding: 8rem 3rem;
+      position: relative;
+    }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--accent); font-weight: 600; margin-bottom: 1rem;
+      opacity: 0; transform: translateX(-20px);
+    }
+    .section-title {
+      font-family: var(--font-d); font-size: clamp(2.5rem,5vw,4rem);
+      font-weight: 700; color: var(--text); line-height: 1.1;
+      margin-bottom: 4rem; opacity: 0; transform: translateY(30px);
+    }
+    .section-title em { font-style: italic; color: var(--accent); }
+
+    /* Reveal animations (applied via JS) */
+    .reveal-up { opacity: 0; transform: translateY(50px); }
+    .reveal-left { opacity: 0; transform: translateX(-40px); }
+    .reveal-right { opacity: 0; transform: translateX(40px); }
+    .revealed { opacity: 1 !important; transform: none !important; transition: all 0.8s var(--ease); }
+
+    /* ============================================================
+       ABOUT SECTION
+    ============================================================ */
+    #about { background: var(--bg); }
+    .about-layout {
+      display: grid; grid-template-columns: 1fr 1.6fr; gap: 5rem; align-items: start;
+    }
+    .about-intro p {
+      font-size: 1.1rem; line-height: 1.9; color: var(--text2); margin-bottom: 1.5rem;
+    }
+    .interest-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+    }
+    .interest-card {
+      border-radius: var(--r-lg); overflow: hidden; position: relative;
+      min-height: 200px; display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 1.75rem; cursor: default; transition: transform 0.5s var(--ease);
+      transform-style: preserve-3d; will-change: transform;
+    }
+    .interest-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%);
+      z-index: 1; transition: opacity 0.3s;
+    }
+    .interest-card:hover { transform: translateY(-6px) scale(1.02); }
+    .interest-card .card-icon {
+      position: absolute; top: 1.25rem; right: 1.25rem;
+      font-size: 2.5rem; z-index: 2; transition: transform 0.3s;
+    }
+    .interest-card:hover .card-icon { transform: scale(1.15) rotate(-5deg); }
+    .interest-card .card-title {
+      position: relative; z-index: 2;
+      font-family: var(--font-d); font-size: 1.3rem; font-weight: 700; color: #fff;
+      margin-bottom: 0.25rem;
+    }
+    .interest-card .card-sub {
+      position: relative; z-index: 2;
+      font-size: 0.8rem; color: rgba(255,255,255,0.7); font-weight: 400;
+    }
+    /* Individual card backgrounds */
+    .card-bills {
+      background: linear-gradient(135deg, #001a5e 0%, #002fa8 50%, #c60c30 100%);
+    }
+    .card-bills::after {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px,
+        transparent 1px, transparent 40px
+      );
+    }
+    .card-violin {
+      background: linear-gradient(135deg, #3d1f0a 0%, #7a3e14 50%, #c4712a 100%);
+    }
+    .music-staff {
+      position: absolute; inset: 0; overflow: hidden; opacity: 0.2;
+    }
+    .music-staff svg { width: 100%; height: 100%; }
+    .card-gilmore {
+      background: linear-gradient(135deg, #2c1a00 0%, #6b3c00 50%, #c8a03c 100%);
+    }
+    .steam-wrap { position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); }
+    .steam {
+      display: inline-block; width: 8px; height: 30px; margin: 0 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      animation: steamRise 2s ease-in-out infinite;
+    }
+    .steam:nth-child(2) { animation-delay: 0.5s; }
+    .steam:nth-child(3) { animation-delay: 1s; }
+    @keyframes steamRise {
+      0% { transform: translateY(0) scaleX(1); opacity: 0.3; }
+      100% { transform: translateY(-40px) scaleX(0.2); opacity: 0; }
+    }
+    .card-spotify {
+      background: linear-gradient(135deg, #0a2e14 0%, #144d20 50%, #1db954 100%);
+    }
+    .eq-bars {
+      position: absolute; bottom: 4rem; left: 1.5rem;
+      display: flex; align-items: flex-end; gap: 4px;
+    }
+    .eq-bar {
+      width: 5px; background: rgba(255,255,255,0.5); border-radius: 2px;
+      animation: eqAnimate 0.8s ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(1) { height: 15px; animation-delay: 0s; }
+    .eq-bar:nth-child(2) { height: 28px; animation-delay: 0.1s; }
+    .eq-bar:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+    .eq-bar:nth-child(4) { height: 35px; animation-delay: 0.15s; }
+    .eq-bar:nth-child(5) { height: 18px; animation-delay: 0.3s; }
+    .eq-bar:nth-child(6) { height: 25px; animation-delay: 0.05s; }
+    @keyframes eqAnimate {
+      from { transform: scaleY(0.4); }
+      to { transform: scaleY(1); }
+    }
+
+    /* ============================================================
+       EDUCATION SECTION
+    ============================================================ */
+    #education { background: var(--bg2); }
+    .edu-timeline {
+      display: flex; flex-direction: column; gap: 0;
+      position: relative; padding-left: 3rem;
+    }
+    .edu-timeline::before {
+      content: ''; position: absolute; left: 0; top: 24px; bottom: 24px;
+      width: 2px; background: var(--border);
+    }
+    .edu-line-progress {
+      position: absolute; left: 0; top: 24px; width: 2px;
+      height: 0; background: var(--accent);
+      transition: height 1.5s var(--ease);
+    }
+    .edu-item {
+      position: relative; padding: 2.5rem 3rem 2.5rem 2rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); margin-bottom: 2rem;
+      transition: all 0.3s var(--ease); overflow: hidden;
+    }
+    .edu-item:hover {
+      background: var(--surface2); border-color: rgba(var(--accent-rgb),0.3);
+      transform: translateX(8px);
+    }
+    .edu-item::before {
+      content: ''; position: absolute; left: -3.4rem; top: 50%;
+      transform: translateY(-50%); width: 14px; height: 14px;
+      border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 20px rgba(var(--accent-rgb),0.5);
+    }
+    .edu-accent-line {
+      position: absolute; top: 0; right: 0; width: 4px; height: 100%;
+      background: var(--accent); border-radius: 0 var(--r-lg) var(--r-lg) 0;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .edu-item:hover .edu-accent-line { opacity: 1; }
+    .edu-school {
+      font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;
+    }
+    .edu-degree {
+      font-family: var(--font-d); font-size: 1.6rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.5rem; line-height: 1.2;
+    }
+    .edu-meta {
+      font-size: 0.85rem; color: var(--text2); display: flex; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .edu-meta span::before { margin-right: 0.4rem; opacity: 0.6; }
+
+    /* ============================================================
+       RESEARCH SECTION
+    ============================================================ */
+    #research { background: var(--bg); }
+    .research-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    }
+    .research-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 2.5rem 2rem; position: relative;
+      overflow: hidden; transition: all 0.4s var(--ease);
+      transform-style: preserve-3d;
+    }
+    .research-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-accent, var(--accent));
+    }
+    .research-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(var(--accent-rgb), 0.3);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+    }
+    .research-card .card-glow {
+      position: absolute; inset: 0; opacity: 0;
+      background: radial-gradient(ellipse at center, var(--card-glow, rgba(var(--accent-rgb),0.05)) 0%, transparent 70%);
+      transition: opacity 0.4s;
+    }
+    .research-card:hover .card-glow { opacity: 1; }
+    .research-icon {
+      font-size: 2.5rem; margin-bottom: 1.5rem; display: block;
+    }
+    .research-org {
+      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text2); font-weight: 600; margin-bottom: 0.75rem;
+    }
+    .research-title {
+      font-family: var(--font-d); font-size: 1.25rem; font-weight: 700;
+      color: var(--text); margin-bottom: 1rem; line-height: 1.3;
+    }
+    .research-desc {
+      font-size: 0.875rem; color: var(--text2); line-height: 1.8;
+    }
+    .research-tag {
+      display: inline-block; margin-top: 1.5rem;
+      padding: 0.35rem 0.85rem; border-radius: 100px;
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+      background: rgba(var(--accent-rgb),0.1); color: var(--accent);
+      border: 1px solid rgba(var(--accent-rgb),0.2);
+    }
+
+    /* ============================================================
+       LEADERSHIP SECTION
+    ============================================================ */
+    #leadership { background: var(--bg2); }
+    .leadership-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    }
+    .leadership-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 2.5rem 2rem;
+      position: relative; overflow: hidden;
+      transition: all 0.4s var(--ease);
+    }
+    .leadership-card:hover {
+      background: var(--surface2); transform: translateY(-6px);
+      box-shadow: var(--shadow);
+    }
+    .leadership-num {
+      font-family: var(--font-d); font-size: 4rem; font-weight: 900;
+      color: rgba(var(--accent-rgb),0.12); line-height: 1;
+      position: absolute; top: 1rem; right: 1.5rem;
+      transition: color 0.3s;
+    }
+    .leadership-card:hover .leadership-num { color: rgba(var(--accent-rgb),0.2); }
+    .leadership-icon { font-size: 1.75rem; margin-bottom: 1.25rem; }
+    .leadership-title {
+      font-family: var(--font-d); font-size: 1.3rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.5rem; line-height: 1.2;
+    }
+    .leadership-role {
+      font-size: 0.8rem; color: var(--accent); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;
+    }
+    .leadership-desc {
+      font-size: 0.875rem; color: var(--text2); line-height: 1.7;
+    }
+
+    /* ============================================================
+       WORK SECTION
+    ============================================================ */
+    #work { background: var(--bg); }
+    .work-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+    }
+    .work-card {
+      border-radius: var(--r-lg); overflow: hidden; position: relative;
+      min-height: 300px; display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 2.5rem; cursor: default;
+      transition: transform 0.4s var(--ease), box-shadow 0.4s;
+    }
+    .work-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 100%);
+      z-index: 1;
+    }
+    .work-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: var(--shadow); }
+    .work-card-content { position: relative; z-index: 2; }
+    .work-company {
+      font-family: var(--font-d); font-size: 2rem; font-weight: 900;
+      color: #fff; margin-bottom: 0.5rem; letter-spacing: -0.02em;
+    }
+    .work-period {
+      font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .work-desc { font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 1.7; }
+    .card-jcrew {
+      background: linear-gradient(135deg, #1a1410 0%, #3d2e1a 50%, #6b4e2a 100%);
+    }
+    .card-marshalls {
+      background: linear-gradient(135deg, #1a0a0a 0%, #5a1010 50%, #c41818 100%);
+    }
+    .work-pattern {
+      position: absolute; inset: 0; overflow: hidden; opacity: 0.07;
+      background-image: repeating-linear-gradient(
+        45deg, rgba(255,255,255,0.5) 0, rgba(255,255,255,0.5) 1px,
+        transparent 0, transparent 50%
+      );
+      background-size: 20px 20px;
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      background: var(--bg2); border-top: 1px solid var(--border);
+      padding: 4rem 3rem; text-align: center;
+    }
+    .footer-name {
+      font-family: var(--font-d); font-size: clamp(3rem,8vw,7rem);
+      font-weight: 900; color: var(--text); opacity: 0.08; letter-spacing: -0.03em;
+      line-height: 1; margin-bottom: 2rem; cursor: default;
+    }
+    .footer-tagline {
+      font-size: 1rem; color: var(--text2); margin-bottom: 2rem;
+      font-family: var(--font-d); font-style: italic;
+    }
+    .footer-copy { font-size: 0.8rem; color: var(--text2); opacity: 0.5; }
+
+    /* ============================================================
+       EDITOR BUTTON & PANEL
+    ============================================================ */
+    #editor-btn {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 2000;
+      width: 54px; height: 54px; border-radius: 50%;
+      background: var(--accent); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px rgba(var(--accent-rgb),0.4);
+      transition: all 0.3s var(--ease); font-size: 1.25rem;
+    }
+    #editor-btn:hover { transform: scale(1.1) rotate(10deg); }
+    #editor-btn.active { background: var(--text); color: var(--bg); }
+
+    #editor-panel {
+      position: fixed; right: -400px; top: 0; bottom: 0; width: 380px;
+      background: var(--bg2); border-left: 1px solid var(--border);
+      z-index: 1999; overflow-y: auto; padding: 2rem 1.75rem;
+      transition: right 0.4s var(--ease);
+      box-shadow: -20px 0 60px rgba(0,0,0,0.4);
+    }
+    #editor-panel.open { right: 0; }
+    .ep-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);
+    }
+    .ep-title { font-family: var(--font-d); font-size: 1.3rem; font-weight: 700; color: var(--text); }
+    .ep-close {
+      background: none; border: none; color: var(--text2); font-size: 1.4rem;
+      cursor: pointer; padding: 0.25rem; transition: color 0.2s;
+    }
+    .ep-close:hover { color: var(--text); }
+    .ep-section { margin-bottom: 2rem; }
+    .ep-section-title {
+      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text2); font-weight: 600; margin-bottom: 1rem;
+    }
+    .theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+    .theme-swatch {
+      width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.2s; position: relative;
+    }
+    .theme-swatch.active { border-color: var(--text); transform: scale(1.1); }
+    .theme-swatch[data-theme="default"] { background: linear-gradient(135deg,#08090f,#c4a86c); }
+    .theme-swatch[data-theme="light"] { background: linear-gradient(135deg,#f7f3ee,#8b6914); }
+    .theme-swatch[data-theme="bills"] { background: linear-gradient(135deg,#00184d,#c60c30); }
+    .theme-swatch[data-theme="rose"] { background: linear-gradient(135deg,#110818,#e040a0); }
+    .theme-swatch[data-theme="sage"] { background: linear-gradient(135deg,#090f0e,#4caf86); }
+    .color-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; }
+    .color-label { font-size: 0.8rem; color: var(--text2); flex: 1; }
+    .color-row input[type="color"] {
+      width: 40px; height: 32px; border: 1px solid var(--border);
+      border-radius: 6px; background: none; cursor: pointer; padding: 2px;
+    }
+    .ep-btn {
+      width: 100%; padding: 0.8rem 1rem; border-radius: var(--r-sm);
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-family: var(--font-b); font-size: 0.875rem;
+      font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem;
+      text-align: left; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .ep-btn:hover { background: var(--surface2); border-color: var(--accent); }
+    .ep-btn.primary {
+      background: var(--accent); color: var(--bg); border-color: var(--accent);
+      font-weight: 600;
+    }
+    .ep-btn.primary:hover { filter: brightness(1.1); }
+    .ep-toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem;
+      color: var(--text2);
+    }
+    .toggle-switch {
+      width: 40px; height: 22px; background: var(--border); border-radius: 11px;
+      position: relative; cursor: pointer; transition: background 0.3s;
+    }
+    .toggle-switch.on { background: var(--accent); }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch.on::after { transform: translateX(18px); }
+    .font-select {
+      width: 100%; padding: 0.6rem 0.75rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      color: var(--text); font-family: var(--font-b); font-size: 0.875rem;
+      cursor: pointer; margin-bottom: 0.5rem;
+    }
+    .font-select option { background: var(--bg2); }
+    .ep-upload-area {
+      border: 2px dashed var(--border); border-radius: var(--r-md);
+      padding: 1.5rem; text-align: center; color: var(--text2);
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+    }
+    .ep-upload-area:hover { border-color: var(--accent); color: var(--accent); }
+    .ep-upload-area input { display: none; }
+    .ep-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+    /* ============================================================
+       TEXT TOOLBAR (floating, appears on editable click)
+    ============================================================ */
+    #text-toolbar {
+      position: fixed; z-index: 3000;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 0.5rem 0.75rem;
+      display: none; gap: 0.25rem; align-items: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+      flex-wrap: wrap; max-width: 400px;
+    }
+    #text-toolbar.visible { display: flex; }
+    .tb-btn {
+      background: none; border: none; color: var(--text2); padding: 0.4rem 0.5rem;
+      border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: all 0.2s; font-family: var(--font-b);
+    }
+    .tb-btn:hover { background: var(--surface2); color: var(--text); }
+    .tb-sep { width: 1px; height: 20px; background: var(--border); margin: 0 0.25rem; }
+    .tb-color { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border); }
+    .tb-size { width: 60px; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.8rem; }
+    .tb-input { display: none; }
+
+    /* ============================================================
+       EDITOR ACTIVE STYLES
+    ============================================================ */
+    body.editor-active [data-editable] {
+      outline: 1px dashed rgba(var(--accent-rgb),0.4);
+      border-radius: 4px;
+      cursor: text !important;
+      transition: outline 0.2s;
+    }
+    body.editor-active [data-editable]:hover {
+      outline: 2px solid rgba(var(--accent-rgb),0.7);
+      background: rgba(var(--accent-rgb),0.05);
+    }
+    body.editor-active [data-editable]:focus {
+      outline: 2px solid var(--accent);
+      background: rgba(var(--accent-rgb),0.08);
+    }
+    body.editor-active [data-editable]:focus-visible { outline: 2px solid var(--accent); }
+    .editor-mode-badge {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: var(--bg); padding: 0.35rem 1rem;
+      border-radius: 100px; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; z-index: 1998;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    body.editor-active .editor-mode-badge { opacity: 1; }
+
+    /* ============================================================
+       BACKGROUND PATTERNS
+    ============================================================ */
+    .bg-dots {
+      background-image: radial-gradient(circle, rgba(var(--accent-rgb),0.15) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+    .bg-grid {
+      background-image: linear-gradient(rgba(var(--accent-rgb),0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .bg-diagonal {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 30px,
+        rgba(var(--accent-rgb),0.03) 30px, rgba(var(--accent-rgb),0.03) 31px
+      );
+    }
+    .bg-none { }
+
+    /* ============================================================
+       PARTICLE CANVAS
+    ============================================================ */
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 900px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .nav-links { gap: 1.5rem; }
+      section { padding: 5rem 1.5rem; }
+      .about-layout { grid-template-columns: 1fr; gap: 3rem; }
+      .interest-grid { grid-template-columns: 1fr 1fr; }
+      .research-grid { grid-template-columns: 1fr; }
+      .leadership-grid { grid-template-columns: 1fr; }
+      .work-grid { grid-template-columns: 1fr; }
+      #editor-panel { width: 100%; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .interest-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 4rem; }
+    }
+
+    /* ============================================================
+       SCROLL SNAP (optional, soft)
+    ============================================================ */
+    /* Additional micro-animations */
+    @keyframes rotateIn {
+      from { transform: rotate(-10deg) scale(0.8); opacity: 0; }
+      to { transform: rotate(0) scale(1); opacity: 1; }
+    }
+    .noise-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9990; opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+    .section-line {
+      width: 60px; height: 3px; background: var(--accent); margin-bottom: 2rem;
+      transform-origin: left; transform: scaleX(0);
+    }
+    .section-line.revealed { transform: scaleX(1); transition: transform 0.6s var(--ease) 0.2s; }
+  </style>
+</head>
+<body>
+
+<!-- Noise overlay for depth -->
+<div class="noise-overlay"></div>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- Editor mode badge -->
+<div class="editor-mode-badge">✏️ Editor Mode Active — Click any text to edit</div>
+
+<!-- Loading Screen -->
+<div id="loader">
+  <div class="loader-name" aria-hidden="true">
+    <span style="animation-delay:0s">S</span><span style="animation-delay:0.05s">Y</span><span style="animation-delay:0.1s">D</span><span style="animation-delay:0.15s">N</span><span style="animation-delay:0.2s">E</span><span style="animation-delay:0.25s">Y</span><span style="animation-delay:0.4s">&nbsp;</span><span style="animation-delay:0.45s">S</span><span style="animation-delay:0.5s">T</span><span style="animation-delay:0.55s">E</span><span style="animation-delay:0.6s">I</span><span style="animation-delay:0.65s">N</span>
+  </div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+
+<!-- Navigation -->
+<nav id="nav">
+  <a href="#hero" class="nav-logo">SS</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#research">Research</a></li>
+    <li><a href="#leadership">Leadership</a></li>
+    <li><a href="#work">Experience</a></li>
+  </ul>
+</nav>
+
+<!-- Editor Toggle Button -->
+<button id="editor-btn" title="Toggle Editor Mode">✏️</button>
+
+<!-- Editor Side Panel -->
+<div id="editor-panel">
+  <div class="ep-header">
+    <div class="ep-title">Portfolio Editor</div>
+    <button class="ep-close" id="ep-close-btn">✕</button>
+  </div>
+
+  <!-- Themes -->
+  <div class="ep-section">
+    <div class="ep-section-title">Color Themes</div>
+    <div class="theme-grid">
+      <div class="theme-swatch active" data-theme="default" title="Midnight Gold"></div>
+      <div class="theme-swatch" data-theme="light" title="Cream & Gold"></div>
+      <div class="theme-swatch" data-theme="bills" title="Bills Mode"></div>
+      <div class="theme-swatch" data-theme="rose" title="Rose"></div>
+      <div class="theme-swatch" data-theme="sage" title="Sage"></div>
+    </div>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Custom Colors -->
+  <div class="ep-section">
+    <div class="ep-section-title">Custom Colors</div>
+    <div class="color-row">
+      <div class="color-label">Background</div>
+      <input type="color" id="color-bg" value="#08090f">
+    </div>
+    <div class="color-row">
+      <div class="color-label">Accent</div>
+      <input type="color" id="color-accent" value="#c4a86c">
+    </div>
+    <div class="color-row">
+      <div class="color-label">Text</div>
+      <input type="color" id="color-text" value="#f0ede6">
+    </div>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Typography -->
+  <div class="ep-section">
+    <div class="ep-section-title">Typography</div>
+    <select class="font-select" id="font-display">
+      <option value="'Playfair Display', serif">Playfair Display</option>
+      <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+      <option value="'Georgia', serif">Georgia</option>
+      <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+    </select>
+    <select class="font-select" id="font-body">
+      <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+      <option value="'Inter', sans-serif">Inter</option>
+      <option value="'Georgia', serif">Georgia</option>
+    </select>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Background Patterns -->
+  <div class="ep-section">
+    <div class="ep-section-title">Background Pattern</div>
+    <button class="ep-btn" onclick="setPattern('bg-none')">⬜ None</button>
+    <button class="ep-btn" onclick="setPattern('bg-dots')">· · Dots</button>
+    <button class="ep-btn" onclick="setPattern('bg-grid')">⊞ Grid</button>
+    <button class="ep-btn" onclick="setPattern('bg-diagonal')">⟋ Diagonal</button>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Animations -->
+  <div class="ep-section">
+    <div class="ep-section-title">Animations</div>
+    <div class="ep-toggle-row">
+      <span>Particle Background</span>
+      <div class="toggle-switch on" id="toggle-particles" onclick="toggleParticles(this)"></div>
+    </div>
+    <div class="ep-toggle-row">
+      <span>Card Tilt Effect</span>
+      <div class="toggle-switch on" id="toggle-tilt" onclick="toggleTilt(this)"></div>
+    </div>
+    <div class="ep-toggle-row">
+      <span>Custom Cursor</span>
+      <div class="toggle-switch on" id="toggle-cursor" onclick="toggleCursor(this)"></div>
+    </div>
+    <div class="ep-toggle-row">
+      <span>Floating Icons</span>
+      <div class="toggle-switch on" id="toggle-float" onclick="toggleFloat(this)"></div>
+    </div>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Upload -->
+  <div class="ep-section">
+    <div class="ep-section-title">Upload Image</div>
+    <p style="font-size:0.8rem;color:var(--text2);margin-bottom:1rem;">Select a section card first (click it once), then upload an image to set its background.</p>
+    <div class="ep-upload-area" onclick="document.getElementById('upload-input').click()">
+      <div style="font-size:2rem;margin-bottom:0.5rem">📁</div>
+      <div>Click to upload image</div>
+      <div style="opacity:0.6;margin-top:0.25rem">PNG, JPG, GIF, WebP</div>
+      <input type="file" id="upload-input" accept="image/*">
+    </div>
+  </div>
+
+  <div class="ep-divider"></div>
+
+  <!-- Actions -->
+  <div class="ep-section">
+    <div class="ep-section-title">Actions</div>
+    <button class="ep-btn primary" onclick="savePortfolio()">💾 Save to Browser</button>
+    <button class="ep-btn" onclick="exportPortfolio()">📤 Export as HTML</button>
+    <button class="ep-btn" onclick="resetPortfolio()">↩️ Reset to Defaults</button>
+  </div>
+</div>
+
+<!-- Floating Text Toolbar -->
+<div id="text-toolbar">
+  <button class="tb-btn" onclick="fmt('bold')" title="Bold"><strong>B</strong></button>
+  <button class="tb-btn" onclick="fmt('italic')" title="Italic"><em>I</em></button>
+  <button class="tb-btn" onclick="fmt('underline')" title="Underline"><u>U</u></button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="fmtSize(1)" title="Increase size">A+</button>
+  <button class="tb-btn" onclick="fmtSize(-1)" title="Decrease size">A-</button>
+  <div class="tb-sep"></div>
+  <label title="Text color">
+    <input type="color" id="tb-color-input" class="tb-input">
+    <div class="tb-color" style="background:#c4a86c" onclick="document.getElementById('tb-color-input').click()"></div>
+  </label>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="fmt('removeFormat')" title="Clear formatting">✕</button>
+</div>
+
+<!-- ============================================================
+     MAIN CONTENT
+============================================================ -->
+<main>
+
+  <!-- HERO -->
+  <section id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-bg-gradient"></div>
+
+    <!-- Floating decorative icons -->
+    <div class="float-icon" style="top:15%;left:8%;animation-duration:4s;animation-delay:0s;">🏈</div>
+    <div class="float-icon" style="top:70%;left:5%;animation-duration:5s;animation-delay:1s;">🎻</div>
+    <div class="float-icon" style="top:20%;right:8%;animation-duration:3.5s;animation-delay:0.5s;">☕</div>
+    <div class="float-icon" style="top:65%;right:6%;animation-duration:4.5s;animation-delay:1.5s;">🎵</div>
+    <div class="float-icon" style="top:40%;left:3%;animation-duration:6s;animation-delay:2s;font-size:1.5rem;">📚</div>
+    <div class="float-icon" style="top:45%;right:3%;animation-duration:5.5s;animation-delay:0.8s;font-size:1.5rem;">🧠</div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow" data-editable>University of Chicago — Booth School of Business</div>
+      <h1 class="hero-title">
+        <span class="line"><span class="word" data-editable>Sydney</span></span>
+        <span class="line"><span class="word gradient-text" data-editable>Stein</span></span>
+      </h1>
+      <div class="hero-tags">
+        <span class="tag" data-editable>🏈 Bills Fan</span>
+        <span class="tag" data-editable>🎻 Violinist</span>
+        <span class="tag" data-editable>☕ Gilmore Girls Devotee</span>
+        <span class="tag" data-editable>🎵 Spotify Addict</span>
+        <span class="tag" data-editable>🔬 Researcher</span>
+        <span class="tag" data-editable>🎓 Psychology → MBA</span>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-inner">
+      <div class="about-layout">
+        <div class="about-text">
+          <div class="section-label reveal-left">About Me</div>
+          <div class="section-line"></div>
+          <h2 class="section-title">A little<br><em>about me</em></h2>
+          <div class="about-intro">
+            <p data-editable>I'm a graduate student at the University of Chicago Booth School of Business, bringing a background in psychology and a passion for understanding the human mind — whether that's in a research lab, a classroom, or on the sidelines cheering for the Bills.</p>
+            <p data-editable>Outside of academia, you'll find me playing violin, rewatching Gilmore Girls for the hundredth time, or curating the perfect playlist on Spotify.</p>
+          </div>
+        </div>
+        <div class="interest-grid">
+          <!-- Bills -->
+          <div class="interest-card card-bills tilt-card reveal-up" style="animation-delay:0.1s">
+            <div class="card-icon">🏈</div>
+            <div class="card-title" data-editable>Buffalo Bills</div>
+            <div class="card-sub" data-editable>Die-hard fan — win or lose</div>
+          </div>
+          <!-- Violin -->
+          <div class="interest-card card-violin tilt-card reveal-up" style="animation-delay:0.2s">
+            <div class="music-staff">
+              <svg viewBox="0 0 200 200" preserveAspectRatio="none">
+                <line x1="0" y1="60" x2="200" y2="60" stroke="white" stroke-width="1.5"/>
+                <line x1="0" y1="80" x2="200" y2="80" stroke="white" stroke-width="1.5"/>
+                <line x1="0" y1="100" x2="200" y2="100" stroke="white" stroke-width="1.5"/>
+                <line x1="0" y1="120" x2="200" y2="120" stroke="white" stroke-width="1.5"/>
+                <line x1="0" y1="140" x2="200" y2="140" stroke="white" stroke-width="1.5"/>
+                <text x="20" y="125" fill="white" font-size="40">♩</text>
+                <text x="70" y="105" fill="white" font-size="40">♪</text>
+                <text x="120" y="135" fill="white" font-size="40">♫</text>
+              </svg>
+            </div>
+            <div class="card-icon">🎻</div>
+            <div class="card-title" data-editable>Violinist</div>
+            <div class="card-sub" data-editable>Classical training, lifelong passion</div>
+          </div>
+          <!-- Gilmore Girls -->
+          <div class="interest-card card-gilmore tilt-card reveal-up" style="animation-delay:0.3s">
+            <div class="steam-wrap">
+              <span class="steam"></span><span class="steam"></span><span class="steam"></span>
+            </div>
+            <div class="card-icon">☕</div>
+            <div class="card-title" data-editable>Gilmore Girls</div>
+            <div class="card-sub" data-editable>In Lorelai we trust</div>
+          </div>
+          <!-- Spotify -->
+          <div class="interest-card card-spotify tilt-card reveal-up" style="animation-delay:0.4s">
+            <div class="eq-bars">
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+            </div>
+            <div class="card-icon">🎵</div>
+            <div class="card-title" data-editable>Spotify</div>
+            <div class="card-sub" data-editable>Always listening to something</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section id="education">
+    <div class="section-inner">
+      <div class="section-label reveal-left">Academic Journey</div>
+      <div class="section-line"></div>
+      <h2 class="section-title">My <em>education</em></h2>
+      <div class="edu-timeline">
+        <div class="edu-line-progress" id="edu-progress"></div>
+        <!-- Booth -->
+        <div class="edu-item reveal-up" style="--card-accent:var(--accent)">
+          <div class="edu-accent-line"></div>
+          <div class="edu-school" data-editable>University of Chicago — Booth School of Business</div>
+          <div class="edu-degree" data-editable>Master of Business Administration</div>
+          <div class="edu-meta">
+            <span data-editable>📍 Chicago, IL</span>
+            <span data-editable>📅 Current</span>
+            <span data-editable>📖 In Progress</span>
+          </div>
+        </div>
+        <!-- Binghamton -->
+        <div class="edu-item reveal-up">
+          <div class="edu-accent-line"></div>
+          <div class="edu-school" data-editable>Binghamton University — State University of New York</div>
+          <div class="edu-degree" data-editable>Bachelor of Science in Psychology</div>
+          <div class="edu-meta">
+            <span data-editable>📍 Binghamton, NY</span>
+            <span data-editable>📅 Graduated</span>
+            <span data-editable>🎓 Psychology</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section id="research">
+    <div class="section-inner">
+      <div class="section-label reveal-left">Scholarly Work</div>
+      <div class="section-line"></div>
+      <h2 class="section-title">Research &amp; <em>Inquiry</em></h2>
+      <div class="research-grid">
+        <!-- Anxiety Clinic -->
+        <div class="research-card tilt-card reveal-up" style="--card-accent:#a78bfa;--card-glow:rgba(167,139,250,0.08)">
+          <div class="card-glow"></div>
+          <div class="research-icon">🧠</div>
+          <div class="research-org" data-editable>Binghamton University</div>
+          <div class="research-title" data-editable>Binghamton Anxiety Clinic</div>
+          <div class="research-desc" data-editable>Contributed to clinical research examining anxiety disorders and psychological interventions. Gained hands-on experience with research methodologies, data collection, and patient-centered approaches to mental health.</div>
+          <span class="research-tag" data-editable>Clinical Psychology</span>
+        </div>
+        <!-- FYRI -->
+        <div class="research-card tilt-card reveal-up" style="--card-accent:#fb923c;--card-glow:rgba(251,146,60,0.08)">
+          <div class="card-glow"></div>
+          <div class="research-icon">🔬</div>
+          <div class="research-org" data-editable>Binghamton University</div>
+          <div class="research-title" data-editable>First Year Research Immersion</div>
+          <div class="research-desc" data-editable>Selected for this prestigious program that engages first-year students in meaningful research from day one. Explored experimental design, literature review, and collaborative academic inquiry.</div>
+          <span class="research-tag" data-editable>Research Methods</span>
+        </div>
+        <!-- BMINDS -->
+        <div class="research-card tilt-card reveal-up" style="--card-accent:#34d399;--card-glow:rgba(52,211,153,0.08)">
+          <div class="card-glow"></div>
+          <div class="research-icon">💡</div>
+          <div class="research-org" data-editable>Binghamton University</div>
+          <div class="research-title" data-editable>BMINDS</div>
+          <div class="research-desc" data-editable>Participated in the Binghamton Minds research initiative, exploring the intersection of neuroscience, behavior, and cognition. Engaged in interdisciplinary dialogue at the forefront of psychological science.</div>
+          <span class="research-tag" data-editable>Neuroscience</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERSHIP -->
+  <section id="leadership">
+    <div class="section-inner">
+      <div class="section-label reveal-left">Impact & Service</div>
+      <div class="section-line"></div>
+      <h2 class="section-title">Leadership &amp; <em>Mentorship</em></h2>
+      <div class="leadership-grid">
+        <!-- EOP -->
+        <div class="leadership-card tilt-card reveal-up">
+          <div class="leadership-num">01</div>
+          <div class="leadership-icon">🌟</div>
+          <div class="leadership-title" data-editable>Educational Opportunity Program</div>
+          <div class="leadership-role" data-editable>EOP Participant & Advocate</div>
+          <div class="leadership-desc" data-editable>Active member of Binghamton's EOP community, supporting first-generation and underrepresented students in navigating higher education. Committed to expanding access and opportunity for all students.</div>
+        </div>
+        <!-- Peer Mentor -->
+        <div class="leadership-card tilt-card reveal-up">
+          <div class="leadership-num">02</div>
+          <div class="leadership-icon">🤝</div>
+          <div class="leadership-title" data-editable>Peer Mentor</div>
+          <div class="leadership-role" data-editable>Student Success Mentor</div>
+          <div class="leadership-desc" data-editable>Guided incoming students through their transition to university life, providing academic support, personal development coaching, and building a sense of community and belonging on campus.</div>
+        </div>
+        <!-- TA -->
+        <div class="leadership-card tilt-card reveal-up">
+          <div class="leadership-num">03</div>
+          <div class="leadership-icon">📚</div>
+          <div class="leadership-title" data-editable>Teaching Assistant</div>
+          <div class="leadership-role" data-editable>Psychology Department TA</div>
+          <div class="leadership-desc" data-editable>Supported faculty in course delivery, led discussion sections, graded assignments, and held office hours to help students master complex psychological concepts and research methodologies.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK EXPERIENCE -->
+  <section id="work">
+    <div class="section-inner">
+      <div class="section-label reveal-left">Work Experience</div>
+      <div class="section-line"></div>
+      <h2 class="section-title">Where I've <em>worked</em></h2>
+      <div class="work-grid">
+        <!-- J.Crew -->
+        <div class="work-card card-jcrew tilt-card reveal-left">
+          <div class="work-pattern"></div>
+          <div class="work-card-content">
+            <div class="work-company" data-editable>J.Crew</div>
+            <div class="work-period" data-editable>Retail Associate</div>
+            <div class="work-desc" data-editable>Delivered exceptional customer service in a fast-paced retail environment. Developed strong communication, sales, and styling skills while building lasting relationships with customers.</div>
+          </div>
+        </div>
+        <!-- Marshalls -->
+        <div class="work-card card-marshalls tilt-card reveal-right">
+          <div class="work-pattern"></div>
+          <div class="work-card-content">
+            <div class="work-company" data-editable>Marshalls</div>
+            <div class="work-period" data-editable>Retail Associate</div>
+            <div class="work-desc" data-editable>Thrived in a dynamic off-price retail setting, honing inventory management, customer engagement, and operational skills. Consistently delivered results in a high-volume environment.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-name" aria-hidden="true">Sydney Stein</div>
+  <div class="footer-tagline" data-editable>"She believed she could, so she did."</div>
+  <div class="footer-copy" data-editable>© 2025 Sydney Stein · University of Chicago Booth School of Business</div>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
+<script>
+// ============================================================
+// GSAP REGISTER
+// ============================================================
+gsap.registerPlugin(ScrollTrigger);
+
+// ============================================================
+// LOADER
+// ============================================================
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    loader.classList.add('done');
+    setTimeout(() => loader.remove(), 1000);
+    initAnimations();
+  }, 1800);
+});
+
+// ============================================================
+// CUSTOM CURSOR
+// ============================================================
+const curDot = document.getElementById('cur-dot');
+const curRing = document.getElementById('cur-ring');
+let mx = window.innerWidth/2, my = window.innerHeight/2;
+let rx = mx, ry = my;
+let cursorEnabled = true;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  if (cursorEnabled) {
+    curDot.style.left = mx + 'px';
+    curDot.style.top = my + 'px';
+  }
+});
+
+function animateCursor() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  if (cursorEnabled) {
+    curRing.style.left = rx + 'px';
+    curRing.style.top = ry + 'px';
+  }
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a, button, .interest-card, .work-card, .research-card, .leadership-card, .tag').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    if (!cursorEnabled) return;
+    curRing.style.width = '60px';
+    curRing.style.height = '60px';
+    curRing.style.borderColor = 'rgba(var(--accent-rgb),0.8)';
+    curDot.style.width = '12px';
+    curDot.style.height = '12px';
+  });
+  el.addEventListener('mouseleave', () => {
+    curRing.style.width = '36px';
+    curRing.style.height = '36px';
+    curRing.style.borderColor = 'rgba(var(--accent-rgb),0.5)';
+    curDot.style.width = '8px';
+    curDot.style.height = '8px';
+  });
+});
+
+// ============================================================
+// NAVIGATION SCROLL
+// ============================================================
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ============================================================
+// PARTICLE CANVAS
+// ============================================================
+let particlesEnabled = true;
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let animFrame;
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.speedY = (Math.random() - 0.5) * 0.4 - 0.1;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.color = Math.random() > 0.7 ? 'rgba(196,168,108,' : 'rgba(200,200,220,';
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.y < -5 || this.x < -5 || this.x > canvas.width + 5) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color + this.opacity + ')';
+    ctx.fill();
+  }
+}
+
+function initParticles() {
+  particles = [];
+  const count = Math.min(120, Math.floor(canvas.width * canvas.height / 6000));
+  for (let i = 0; i < count; i++) particles.push(new Particle());
+}
+
+function drawParticles() {
+  if (!particlesEnabled) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  // Draw connections
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i+1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 100) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(196,168,108,${0.06 * (1 - dist/100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  animFrame = requestAnimationFrame(drawParticles);
+}
+
+initParticles();
+drawParticles();
+
+// ============================================================
+// HERO ANIMATIONS
+// ============================================================
+function initAnimations() {
+  // Eyebrow
+  gsap.to('.hero-eyebrow', { opacity: 1, y: 0, duration: 1, delay: 0.2, ease: 'power3.out' });
+
+  // Title words
+  gsap.to('.hero-title .word', {
+    opacity: 1, y: 0, duration: 1.2, stagger: 0.15, delay: 0.4, ease: 'power4.out'
+  });
+
+  // Tags
+  gsap.to('.tag', {
+    opacity: 1, y: 0, duration: 0.6, stagger: 0.1, delay: 1, ease: 'back.out(1.5)'
+  });
+
+  // Scroll-triggered section reveals
+  setupScrollAnimations();
+}
+
+function setupScrollAnimations() {
+  document.querySelectorAll('.section-label, .section-title, .section-line').forEach(el => {
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 88%',
+      onEnter: () => el.classList.add('revealed'),
+    });
+  });
+
+  document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach((el, i) => {
+    const delay = el.dataset.delay || 0;
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 90%',
+      onEnter: () => {
+        setTimeout(() => {
+          el.style.transition = 'all 0.8s cubic-bezier(0.4,0,0.2,1)';
+          el.classList.add('revealed');
+        }, i * 80);
+      }
+    });
+  });
+
+  // Education progress line
+  ScrollTrigger.create({
+    trigger: '#education',
+    start: 'top 60%',
+    onEnter: () => {
+      const prog = document.getElementById('edu-progress');
+      if (prog) {
+        prog.style.transition = 'height 1.5s cubic-bezier(0.4,0,0.2,1)';
+        const timeline = prog.closest('.edu-timeline');
+        if (timeline) prog.style.height = (timeline.offsetHeight - 48) + 'px';
+      }
+    }
+  });
+}
+
+// ============================================================
+// 3D CARD TILT
+// ============================================================
+let tiltEnabled = true;
+
+function initTilt() {
+  document.querySelectorAll('.tilt-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      if (!tiltEnabled) return;
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      const cx = r.width / 2, cy = r.height / 2;
+      const rotX = ((y - cy) / cy) * -10;
+      const rotY = ((x - cx) / cx) * 10;
+      card.style.transform = `perspective(1200px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(10px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+initTilt();
+
+// ============================================================
+// FLOATING ICONS PARALLAX
+// ============================================================
+let floatEnabled = true;
+window.addEventListener('scroll', () => {
+  if (!floatEnabled) return;
+  const scrolled = window.scrollY;
+  document.querySelectorAll('.float-icon').forEach((icon, i) => {
+    const speed = 0.05 + (i * 0.02);
+    icon.style.transform = `translateY(${scrolled * speed}px)`;
+  });
+});
+
+// ============================================================
+// EDITOR FUNCTIONALITY
+// ============================================================
+const editorBtn = document.getElementById('editor-btn');
+const editorPanel = document.getElementById('editor-panel');
+const textToolbar = document.getElementById('text-toolbar');
+let editorOpen = false;
+let activeEditable = null;
+let selectedCard = null;
+
+editorBtn.addEventListener('click', () => toggleEditor());
+document.getElementById('ep-close-btn').addEventListener('click', () => closeEditor());
+
+function toggleEditor() {
+  editorOpen ? closeEditor() : openEditor();
+}
+
+function openEditor() {
+  editorOpen = true;
+  editorBtn.classList.add('active');
+  editorBtn.textContent = '✕';
+  editorPanel.classList.add('open');
+  document.body.classList.add('editor-active');
+  enableEditables();
+}
+
+function closeEditor() {
+  editorOpen = false;
+  editorBtn.classList.remove('active');
+  editorBtn.textContent = '✏️';
+  editorPanel.classList.remove('open');
+  document.body.classList.remove('editor-active');
+  textToolbar.classList.remove('visible');
+  disableEditables();
+}
+
+function enableEditables() {
+  document.querySelectorAll('[data-editable]').forEach(el => {
+    el.setAttribute('contenteditable', 'true');
+    el.addEventListener('focus', onEditableFocus, true);
+    el.addEventListener('blur', onEditableBlur, true);
+  });
+  document.querySelectorAll('.interest-card, .research-card, .leadership-card, .work-card').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', onCardClick);
+  });
+}
+
+function disableEditables() {
+  document.querySelectorAll('[data-editable]').forEach(el => {
+    el.removeAttribute('contenteditable');
+    el.removeEventListener('focus', onEditableFocus, true);
+    el.removeEventListener('blur', onEditableBlur, true);
+  });
+  document.querySelectorAll('.interest-card, .research-card, .leadership-card, .work-card').forEach(card => {
+    card.style.cursor = '';
+    card.removeEventListener('click', onCardClick);
+  });
+}
+
+function onEditableFocus(e) {
+  activeEditable = e.target;
+  showTextToolbar(e.target);
+}
+
+function onEditableBlur() {
+  setTimeout(() => {
+    if (!textToolbar.contains(document.activeElement)) {
+      textToolbar.classList.remove('visible');
+    }
+  }, 150);
+  saveToStorage();
+}
+
+function showTextToolbar(el) {
+  const rect = el.getBoundingClientRect();
+  const tb = textToolbar;
+  tb.classList.add('visible');
+  let top = rect.top + window.scrollY - 58;
+  let left = rect.left;
+  if (top < 80) top = rect.bottom + window.scrollY + 8;
+  if (left + 360 > window.innerWidth) left = window.innerWidth - 370;
+  tb.style.top = top + 'px';
+  tb.style.left = Math.max(8, left) + 'px';
+}
+
+function onCardClick(e) {
+  if (!editorOpen) return;
+  document.querySelectorAll('.card-selected').forEach(c => c.classList.remove('card-selected'));
+  e.currentTarget.classList.add('card-selected');
+  e.currentTarget.style.outline = '2px solid var(--accent)';
+  selectedCard = e.currentTarget;
+  document.querySelectorAll('.interest-card, .research-card, .leadership-card, .work-card').forEach(c => {
+    if (c !== selectedCard) c.style.outline = '';
+  });
+}
+
+// Text formatting
+function fmt(cmd) {
+  if (activeEditable) activeEditable.focus();
+  document.execCommand(cmd, false, null);
+}
+
+let currentFontSize = 16;
+function fmtSize(dir) {
+  if (!activeEditable) return;
+  activeEditable.focus();
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const span = document.createElement('span');
+  const currentSize = parseInt(window.getComputedStyle(activeEditable).fontSize) || 16;
+  span.style.fontSize = (currentSize + dir * 2) + 'px';
+  range.surroundContents(span);
+}
+
+// Color picker for text
+document.getElementById('tb-color-input').addEventListener('input', (e) => {
+  if (activeEditable) activeEditable.focus();
+  document.execCommand('foreColor', false, e.target.value);
+  document.querySelector('.tb-color').style.background = e.target.value;
+});
+
+// Image upload
+document.getElementById('upload-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    if (selectedCard) {
+      selectedCard.style.backgroundImage = `url(${ev.target.result})`;
+      selectedCard.style.backgroundSize = 'cover';
+      selectedCard.style.backgroundPosition = 'center';
+    }
+    e.target.value = '';
+  };
+  reader.readAsDataURL(file);
+});
+
+// ============================================================
+// THEME SWITCHER
+// ============================================================
+document.querySelectorAll('.theme-swatch').forEach(swatch => {
+  swatch.addEventListener('click', () => {
+    const theme = swatch.dataset.theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+    swatch.classList.add('active');
+    saveToStorage();
+  });
+});
+
+// Custom color pickers
+document.getElementById('color-bg').addEventListener('input', e => {
+  document.documentElement.style.setProperty('--bg', e.target.value);
+  document.documentElement.style.setProperty('--bg2', e.target.value);
+});
+document.getElementById('color-accent').addEventListener('input', e => {
+  document.documentElement.style.setProperty('--accent', e.target.value);
+  // Parse hex to rgb
+  const hex = e.target.value.replace('#','');
+  const r = parseInt(hex.substring(0,2),16);
+  const g = parseInt(hex.substring(2,4),16);
+  const b = parseInt(hex.substring(4,6),16);
+  document.documentElement.style.setProperty('--accent-rgb', `${r},${g},${b}`);
+});
+document.getElementById('color-text').addEventListener('input', e => {
+  document.documentElement.style.setProperty('--text', e.target.value);
+});
+
+// Font switcher
+document.getElementById('font-display').addEventListener('change', e => {
+  document.documentElement.style.setProperty('--font-d', e.target.value);
+  saveToStorage();
+});
+document.getElementById('font-body').addEventListener('change', e => {
+  document.documentElement.style.setProperty('--font-b', e.target.value);
+  saveToStorage();
+});
+
+// ============================================================
+// BACKGROUND PATTERN
+// ============================================================
+const patternSections = ['#hero','#about','#education','#research','#leadership','#work'];
+let activePattern = 'bg-none';
+
+function setPattern(cls) {
+  const patterns = ['bg-none','bg-dots','bg-grid','bg-diagonal'];
+  document.querySelectorAll('section, footer').forEach(sec => {
+    patterns.forEach(p => sec.classList.remove(p));
+    if (cls !== 'bg-none') sec.classList.add(cls);
+  });
+  activePattern = cls;
+  saveToStorage();
+}
+
+// ============================================================
+// TOGGLE SWITCHES
+// ============================================================
+function toggleParticles(el) {
+  el.classList.toggle('on');
+  particlesEnabled = el.classList.contains('on');
+  if (!particlesEnabled) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    cancelAnimationFrame(animFrame);
+  } else {
+    drawParticles();
+  }
+}
+
+function toggleTilt(el) {
+  el.classList.toggle('on');
+  tiltEnabled = el.classList.contains('on');
+  if (!tiltEnabled) {
+    document.querySelectorAll('.tilt-card').forEach(c => c.style.transform = '');
+  }
+}
+
+function toggleCursor(el) {
+  el.classList.toggle('on');
+  cursorEnabled = el.classList.contains('on');
+  curDot.style.opacity = cursorEnabled ? '1' : '0';
+  curRing.style.opacity = cursorEnabled ? '1' : '0';
+  document.body.style.cursor = cursorEnabled ? 'none' : 'auto';
+}
+
+function toggleFloat(el) {
+  el.classList.toggle('on');
+  floatEnabled = el.classList.contains('on');
+  document.querySelectorAll('.float-icon').forEach(icon => {
+    icon.style.display = floatEnabled ? '' : 'none';
+  });
+}
+
+// ============================================================
+// SAVE / EXPORT / RESET
+// ============================================================
+function saveToStorage() {
+  try {
+    const data = {
+      theme: document.documentElement.getAttribute('data-theme'),
+      content: {},
+      pattern: activePattern,
+    };
+    document.querySelectorAll('[data-editable]').forEach((el, i) => {
+      data.content['el_' + i] = el.innerHTML;
+    });
+    localStorage.setItem('portfolio_data', JSON.stringify(data));
+    showToast('Saved!');
+  } catch(e) { console.warn('Save failed', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem('portfolio_data');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.theme) {
+      document.documentElement.setAttribute('data-theme', data.theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.theme === data.theme);
+      });
+    }
+    if (data.content) {
+      document.querySelectorAll('[data-editable]').forEach((el, i) => {
+        if (data.content['el_' + i] !== undefined) el.innerHTML = data.content['el_' + i];
+      });
+    }
+    if (data.pattern) setPattern(data.pattern);
+  } catch(e) { console.warn('Load failed', e); }
+}
+
+function exportPortfolio() {
+  const clone = document.documentElement.cloneNode(true);
+  // Remove editor UI from export
+  ['editor-btn','editor-panel','text-toolbar','loader','cur-dot','cur-ring'].forEach(id => {
+    const el = clone.querySelector('#' + id);
+    if (el) el.remove();
+  });
+  const blob = new Blob(['<!DOCTYPE html>' + clone.outerHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sydney-stein-portfolio.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded!');
+}
+
+function resetPortfolio() {
+  if (!confirm('Reset all changes to defaults?')) return;
+  localStorage.removeItem('portfolio_data');
+  location.reload();
+}
+
+// ============================================================
+// TOAST NOTIFICATION
+// ============================================================
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `
+      position:fixed;bottom:5rem;right:2rem;z-index:9999;
+      background:var(--accent);color:var(--bg);
+      padding:0.6rem 1.2rem;border-radius:100px;
+      font-size:0.8rem;font-weight:700;
+      opacity:0;transition:opacity 0.3s;
+      pointer-events:none;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => toast.style.opacity = '0', 2000);
+}
+
+// ============================================================
+// SMOOTH ANCHOR SCROLL
+// ============================================================
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+loadFromStorage();
+</script>
+</body>
+</html>
